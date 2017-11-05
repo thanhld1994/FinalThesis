@@ -1,9 +1,8 @@
+import { EmailValidator } from './../../validators/email';
+import { FirebaseServiceProvider } from './../../providers/firebase-service/firebase-service';
 import { Component } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { IonicPage, NavController, ToastController } from 'ionic-angular';
-
-import { User } from '../../providers/providers';
-import { MainPage } from '../pages';
+import { IonicPage, NavController, Loading, LoadingController, AlertController } from 'ionic-angular';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 @IonicPage()
 @Component({
@@ -11,43 +10,45 @@ import { MainPage } from '../pages';
   templateUrl: 'signup.html'
 })
 export class SignupPage {
-  // The account fields for the login form.
-  // If you're using the username field with or without email, make
-  // sure to add it to the type
-  account: { name: string, email: string, password: string } = {
-    name: 'Test Human',
-    email: 'test@example.com',
-    password: 'test'
-  };
+  public signupForm: FormGroup;
+  loading: Loading;
 
-  // Our translated text strings
-  private signupErrorString: string;
+  constructor(public navCtrl: NavController, public firebaseService: FirebaseServiceProvider,
+    public formBuilder: FormBuilder, public loadingCtrl: LoadingController,
+    public alertCtrl: AlertController) {
 
-  constructor(public navCtrl: NavController,
-    public user: User,
-    public toastCtrl: ToastController,
-    public translateService: TranslateService) {
-
-    this.translateService.get('SIGNUP_ERROR').subscribe((value) => {
-      this.signupErrorString = value;
-    })
+    this.signupForm = formBuilder.group({
+      email: ['', Validators.compose([Validators.required, EmailValidator.isValid])],
+      password: ['', Validators.compose([Validators.minLength(6), Validators.required])],
+      name: ['', Validators.compose([Validators.minLength(1), Validators.required])],
+    });
   }
 
-  doSignup() {
-    // Attempt to login in through our User service
-    this.user.signup(this.account).subscribe((resp) => {
-      this.navCtrl.push(MainPage);
-    }, (err) => {
+  signupUser() {
+    if (this.signupForm.valid) {
+      this.loading = this.loadingCtrl.create();
+      this.loading.present();
 
-      this.navCtrl.push(MainPage);
-
-      // Unable to sign up
-      let toast = this.toastCtrl.create({
-        message: this.signupErrorString,
-        duration: 3000,
-        position: 'top'
-      });
-      toast.present();
-    });
+      this.firebaseService.signUp(this.signupForm.value.email, this.signupForm.value.password, this.signupForm.value.name)
+        .then(() => {
+          this.loading.dismiss().then(() => {
+            this.navCtrl.setRoot('LoginPage');
+          });
+        }, (error) => {
+          this.loading.dismiss().then(() => {
+            let alert = this.alertCtrl.create({
+              title: 'Error',
+              message: error.message,
+              buttons: [
+                {
+                  text: "Ok",
+                  role: 'cancel'
+                }
+              ]
+            });
+            alert.present();
+          });
+        });
+    }
   }
 }

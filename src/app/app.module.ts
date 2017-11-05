@@ -1,3 +1,4 @@
+import { RecipeModalPage } from './../pages/recipe-modal/recipe-modal';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
@@ -14,6 +15,19 @@ import { Settings } from '../providers/providers';
 import { User } from '../providers/providers';
 import { Api } from '../providers/providers';
 import { MyApp } from './app.component';
+import { AngularFireAuthModule } from 'angularfire2/auth';
+import { AngularFireDatabaseModule } from 'angularfire2/database';
+import { AngularFireModule } from 'angularfire2';
+import { FirebaseServiceProvider } from '../providers/firebase-service/firebase-service';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDFqDOjBIGYz_59-vwcqpXxjEe1AIlsNUs",
+  authDomain: "thanhlaiapp-178208.firebaseapp.com",
+  databaseURL: "https://thanhlaiapp-178208.firebaseio.com",
+  projectId: "thanhlaiapp-178208",
+  storageBucket: "thanhlaiapp-178208.appspot.com",
+  messagingSenderId: "693680484605"
+};
 
 // The translate loader needs to know where to load i18n files
 // in Ionic's static asset pipeline.
@@ -38,7 +52,8 @@ export function provideSettings(storage: Storage) {
 
 @NgModule({
   declarations: [
-    MyApp
+    MyApp,
+    RecipeModalPage
   ],
   imports: [
     BrowserModule,
@@ -50,12 +65,16 @@ export function provideSettings(storage: Storage) {
         deps: [HttpClient]
       }
     }),
+    AngularFireDatabaseModule,
+    AngularFireAuthModule,
+    AngularFireModule.initializeApp(firebaseConfig),
     IonicModule.forRoot(MyApp),
     IonicStorageModule.forRoot()
   ],
   bootstrap: [IonicApp],
   entryComponents: [
-    MyApp
+    MyApp,
+    RecipeModalPage
   ],
   providers: [
     Api,
@@ -66,7 +85,8 @@ export function provideSettings(storage: Storage) {
     StatusBar,
     { provide: Settings, useFactory: provideSettings, deps: [Storage] },
     // Keep this to enable Ionic's runtime error handling during development
-    { provide: ErrorHandler, useClass: IonicErrorHandler }
+    { provide: ErrorHandler, useClass: IonicErrorHandler },
+    FirebaseServiceProvider
   ]
 })
 export class AppModule { }
